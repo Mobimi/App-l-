@@ -15,33 +15,40 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Cài đặt công cụ đóng gói và ký file
           brew install ldid dpkg
 
       - name: Install Theos
         run: |
           export THEOS=/Users/runner/work/theos
           git clone --recursive https://github.com/theos/theos.git $THEOS
-          
-          # Tải SDK
           mkdir -p $THEOS/sdks
           curl -L https://github.com/theos/sdks/archive/master.zip -o sdks.zip
           unzip -q sdks.zip
           mv sdks-master/*.sdk $THEOS/sdks/
-          
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
-      - name: Build Package
+      - name: Build and Package IPA
         run: |
           export THEOS=$THEOS
-          
-          # FIX LỖI PATH: Thêm cả đường dẫn Homebrew của Intel và Apple Silicon
           export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$THEOS/bin"
           
-          # Ép ldid phải được tìm thấy
-          which ldid || echo "ldid không tìm thấy, kiểm tra lại brew"
-          
+          # 1. Build ra file thực thi
           make package FINALPACKAGE=1
+          
+          # 2. MA THUẬT ĐÚC IPA: Tìm file .app vừa build xong
+          APP_PATH=$(find .theos/obj -name "*.app" | head -n 1)
+          echo "Tìm thấy App tại: $APP_PATH"
+          
+          # 3. Tạo cấu trúc IPA chuẩn của Apple
+          mkdir -p Payload
+          cp -r "$APP_PATH" Payload/
+          
+          # 4. Nén thành file .ipa
+          zip -vr PerformanceHUD.ipa Payload
+          
+          # 5. Nhét vào thư mục packages để bước sau nó tìm thấy
+          mkdir -p packages
+          mv PerformanceHUD.ipa packages/
           
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
