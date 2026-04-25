@@ -32,21 +32,54 @@ jobs:
           export THEOS=$THEOS
           export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$THEOS/bin"
           
-          # 1. Build ra file thực thi
+          # 1. Build code
           make package FINALPACKAGE=1
           
-          # 2. MA THUẬT ĐÚC IPA: Tìm file .app vừa build xong
+          # 2. Định vị App Folder
           APP_PATH=$(find .theos/obj -name "*.app" | head -n 1)
+          APP_NAME=$(basename "$APP_PATH")
           echo "Tìm thấy App tại: $APP_PATH"
-          
-          # 3. Tạo cấu trúc IPA chuẩn của Apple
+
+          # 3. TẠO INFO.PLIST (Chứng minh thư cho App)
+          cat <<EOF > "$APP_PATH/Info.plist"
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleExecutable</key>
+              <string>PerformanceHUD</string>
+              <key>CFBundleIdentifier</key>
+              <string>com.phapsu.hud</string>
+              <key>CFBundleName</key>
+              <string>PerfHUD</string>
+              <key>CFBundleDisplayName</key>
+              <string>PerfHUD</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundleVersion</key>
+              <string>1</string>
+              <key>LSRequiresIPhoneOS</key>
+              <true/>
+              <key>MinimumOSVersion</key>
+              <string>14.0</string>
+              <key>UIDeviceFamily</key>
+              <array><integer>1</integer><integer>2</integer></array>
+              <key>UILaunchStoryboardName</key>
+              <string>LaunchScreen</string>
+          </dict>
+          </plist>
+          EOF
+
+          # 4. KÝ MÀU (Fake sign để ldid nhận diện cấu trúc)
+          ldid -S "$APP_PATH/PerformanceHUD"
+
+          # 5. ĐÓNG GÓI IPA CHUẨN
           mkdir -p Payload
           cp -r "$APP_PATH" Payload/
+          zip -qr PerformanceHUD.ipa Payload
           
-          # 4. Nén thành file .ipa
-          zip -vr PerformanceHUD.ipa Payload
-          
-          # 5. Nhét vào thư mục packages để bước sau nó tìm thấy
           mkdir -p packages
           mv PerformanceHUD.ipa packages/
           
