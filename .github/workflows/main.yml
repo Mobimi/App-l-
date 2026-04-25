@@ -11,24 +11,33 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # Cập nhật lên v4
+        uses: actions/checkout@v4
 
       - name: Install Theos
         run: |
+          # 1. Cài đặt môi trường Theos
           export THEOS=/Users/runner/work/theos
           git clone --recursive https://github.com/theos/theos.git $THEOS
-          # Tải SDK iOS 14.5
-          curl -LO https://github.com/theos/sdks/raw/master/iPhoneOS14.5.sdk.tar.xz
-          tar -xf iPhoneOS14.5.sdk.tar.xz -C $THEOS/sdks
+          
+          # 2. Tải toàn bộ kho SDK chuẩn từ Theos
+          mkdir -p $THEOS/sdks
+          curl -L https://github.com/theos/sdks/archive/master.zip -o sdks.zip
+          unzip -q sdks.zip
+          
+          # 3. Chuyển các file SDK vào đúng vị trí
+          mv sdks-master/*.sdk $THEOS/sdks/
+          
+          # 4. Lưu biến môi trường để dùng cho bước sau
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
       - name: Build Package
         run: |
           export THEOS=$THEOS
+          # Build bản chính thức (Final) để có file .ipa gọn nhẹ
           make package FINALPACKAGE=1
           
       - name: Upload Artifact
-        uses: actions/upload-artifact@v4 # FIX LỖI Ở ĐÂY: Đã lên v4
+        uses: actions/upload-artifact@v4
         with:
           name: PerformanceHUD-IPA
           path: packages/*.ipa
