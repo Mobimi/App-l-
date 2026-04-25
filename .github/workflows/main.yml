@@ -13,6 +13,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Dependencies
+        run: |
+          # Cài đặt ldid và dpkg - hai món nợ đời của dân build Theos
+          brew install ldid dpkg
+
       - name: Install Theos
         run: |
           # 1. Cài đặt môi trường Theos
@@ -27,13 +32,15 @@ jobs:
           # 3. Chuyển các file SDK vào đúng vị trí
           mv sdks-master/*.sdk $THEOS/sdks/
           
-          # 4. Lưu biến môi trường để dùng cho bước sau
+          # 4. Lưu biến môi trường
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
       - name: Build Package
         run: |
           export THEOS=$THEOS
-          # Build bản chính thức (Final) để có file .ipa gọn nhẹ
+          # Thêm dòng này để chắc chắn ldid nằm trong PATH
+          export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$THEOS/bin"
+          
           make package FINALPACKAGE=1
           
       - name: Upload Artifact
