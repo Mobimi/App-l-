@@ -1,0 +1,9 @@
+Package: com.phapsu.performancehud
+Name: Performance HUD
+Depends: mobilesubstrate
+Version: 1.0
+Architecture: iphoneos-arm
+Description: Ứng dụng đo FPS/RAM/CPU độc lập
+Maintainer: Phap Su
+Author: Phap Su
+Section: Utilities
