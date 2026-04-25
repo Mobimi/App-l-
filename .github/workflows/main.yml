@@ -15,31 +15,31 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          # Cài đặt ldid và dpkg - hai món nợ đời của dân build Theos
+          # Cài đặt công cụ đóng gói và ký file
           brew install ldid dpkg
 
       - name: Install Theos
         run: |
-          # 1. Cài đặt môi trường Theos
           export THEOS=/Users/runner/work/theos
           git clone --recursive https://github.com/theos/theos.git $THEOS
           
-          # 2. Tải toàn bộ kho SDK chuẩn từ Theos
+          # Tải SDK
           mkdir -p $THEOS/sdks
           curl -L https://github.com/theos/sdks/archive/master.zip -o sdks.zip
           unzip -q sdks.zip
-          
-          # 3. Chuyển các file SDK vào đúng vị trí
           mv sdks-master/*.sdk $THEOS/sdks/
           
-          # 4. Lưu biến môi trường
           echo "THEOS=$THEOS" >> $GITHUB_ENV
 
       - name: Build Package
         run: |
           export THEOS=$THEOS
-          # Thêm dòng này để chắc chắn ldid nằm trong PATH
-          export PATH="/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$THEOS/bin"
+          
+          # FIX LỖI PATH: Thêm cả đường dẫn Homebrew của Intel và Apple Silicon
+          export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$THEOS/bin"
+          
+          # Ép ldid phải được tìm thấy
+          which ldid || echo "ldid không tìm thấy, kiểm tra lại brew"
           
           make package FINALPACKAGE=1
           
