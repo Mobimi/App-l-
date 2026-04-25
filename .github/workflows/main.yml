@@ -1,0 +1,35 @@
+name: Build PerformanceHUD IPA
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Theos
+        run: |
+          export THEOS=/Users/runner/work/theos
+          git clone --recursive https://github.com/theos/theos.git $THEOS
+          # Tải SDK iOS (Sử dụng bản 14.5 để tương thích tốt)
+          curl -LO https://github.com/theos/sdks/raw/master/iPhoneOS14.5.sdk.tar.xz
+          tar -xf iPhoneOS14.5.sdk.tar.xz -C $THEOS/sdks
+          echo "THEOS=$THEOS" >> $GITHUB_ENV
+
+      - name: Build Package
+        run: |
+          export THEOS=$THEOS
+          # Lệnh đúc IPA từ project Application
+          make package FINALPACKAGE=1
+          
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: PerformanceHUD-IPA
+          path: packages/*.ipa
